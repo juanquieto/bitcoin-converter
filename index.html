@@ -5,79 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitcoin Converter</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f9f9f9;
-        }
-        .container {
-            max-width: 400px;
-            margin: 50px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 1rem;
-        }
-        .converted {
-            font-weight: bold;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🟠 <span style="color: orange;">Bitcoin Converter</span></h2>
-        <p>Current Bitcoin Price: <strong id="btc-price">Loading...</strong></p>
-        
-        <input type="number" id="satoshis" placeholder="Enter amount in satoshis" oninput="convertFromSatoshis()">
-        <input type="number" id="usd" placeholder="Enter amount in USD" oninput="convertFromUSD()">
-        
-        <p class="converted">Converted Values:</p>
-        <p><span id="usd-value">$0.00</span></p>
-        <p><span id="btc-value">0 BTC</span></p>
-        
-        <p class="converted">Converted Values:</p>
-        <p><span id="sats-value">0 sats</span></p>
-        <p><span id="btc-value-usd">0 BTC</span></p>
+        <h2>🚀 Bitcoin Converter</h2>
+        <p>Current Bitcoin Price:</p>
+        <input type="text" id="btcPrice" readonly>
+
+        <p>Satoshis:</p>
+        <input type="number" id="satoshisInput" placeholder="Enter amount in Satoshis" oninput="convertFromSatoshis()">
+
+        <p>USD:</p>
+        <input type="number" id="usdInput" placeholder="Enter amount in USD" oninput="convertFromUSD()">
+
+        <p>Converted Values:</p>
+        <input type="text" id="convertedUSD" readonly>
+        <input type="text" id="convertedBTC" readonly>
     </div>
-    
+
     <script>
         let btcPrice = 0;
-        
+
         async function fetchBTCPrice() {
             try {
-                let response = await fetch('https://api.coindesk.com/v1/bpi/currentprice/USD.json');
+                let response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
                 let data = await response.json();
-                btcPrice = parseFloat(data.bpi.USD.rate.replace(/,/g, ''));
-                document.getElementById('btc-price').innerText = `$${btcPrice.toFixed(2)}`;
+                btcPrice = parseFloat(data.data.rates.USD);
+                document.getElementById("btcPrice").value = `$${btcPrice.toFixed(2)}`;
             } catch (error) {
                 console.error("Error fetching BTC price:", error);
+                document.getElementById("btcPrice").value = "Error loading price";
             }
         }
 
         function convertFromSatoshis() {
-            let sats = document.getElementById("satoshis").value;
-            let btc = sats / 100000000;
+            let satoshis = parseFloat(document.getElementById("satoshisInput").value) || 0;
+            let btc = satoshis / 100000000;
             let usd = btc * btcPrice;
-            document.getElementById("usd-value").innerText = `$${usd.toFixed(2)}`;
-            document.getElementById("btc-value").innerText = `${btc} BTC`;
+
+            document.getElementById("convertedUSD").value = `$${usd.toFixed(2)}`;
+            document.getElementById("convertedBTC").value = `${btc.toFixed(8)} BTC`;
         }
 
         function convertFromUSD() {
-            let usd = document.getElementById("usd").value;
+            let usd = parseFloat(document.getElementById("usdInput").value) || 0;
             let btc = usd / btcPrice;
-            let sats = btc * 100000000;
-            document.getElementById("sats-value").innerText = `${sats.toFixed(0)} sats`;
-            document.getElementById("btc-value-usd").innerText = `${btc.toFixed(8)} BTC`;
+            let satoshis = btc * 100000000;
+
+            document.getElementById("convertedBTC").value = `${btc.toFixed(8)} BTC`;
+            document.getElementById("satoshisInput").value = Math.round(satoshis);
         }
-        
+
         fetchBTCPrice();
-        setInterval(fetchBTCPrice, 60000);
+        setInterval(fetchBTCPrice, 60000); // Update price every 60 seconds
     </script>
 </body>
 </html>
